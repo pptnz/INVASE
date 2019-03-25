@@ -261,12 +261,12 @@ if __name__ == '__main__':
     #%% Data Generation (Train/Test)
     def create_data(data_type, data_out): 
         
-        x_train, y_train, g_train = generate_data(n = train_N, data_type = data_type, seed = train_seed, out = data_out)  
-        x_test,  y_test,  g_test  = generate_data(n = test_N,  data_type = data_type, seed = test_seed,  out = data_out)  
+        x_train, y_train, _ = generate_data(n = train_N, data_type = data_type, seed = train_seed, out = data_out)
+        x_test,  y_test,  _ = generate_data(n = test_N,  data_type = data_type, seed = test_seed,  out = data_out)
     
-        return x_train, y_train, g_train, x_test, y_test, g_test
+        return x_train, y_train, x_test, y_test
     
-    x_train, y_train, g_train, x_test, y_test, g_test = create_data(data_type, data_out)
+    x_train, y_train, x_test, y_test = create_data(data_type, data_out)
 
     #%% 
     # 1. PVS Class call
@@ -283,35 +283,7 @@ if __name__ == '__main__':
     
     # 5. Prediction
     val_predict, dis_predict = PVS_Alg.get_prediction(x_test, score)
-    
-    #%% Performance Metrics
-    def performance_metric(score, g_truth):
 
-        n = len(score)
-        Temp_TPR = np.zeros([n,])
-        Temp_FDR = np.zeros([n,])
-        
-        for i in range(n):
-    
-            # TPR    
-            TPR_Nom = np.sum(score[i,:] * g_truth[i,:])
-            TPR_Den = np.sum(g_truth[i,:])
-            Temp_TPR[i] = 100 * float(TPR_Nom)/float(TPR_Den+1e-8)
-        
-            # FDR
-            FDR_Nom = np.sum(score[i,:] * (1-g_truth[i,:]))
-            FDR_Den = np.sum(score[i,:])
-            Temp_FDR[i] = 100 * float(FDR_Nom)/float(FDR_Den+1e-8)
-    
-        return np.mean(Temp_TPR), np.mean(Temp_FDR), np.std(Temp_TPR), np.std(Temp_FDR)
-    
-    #%% Output
-        
-    TPR_mean, FDR_mean, TPR_std, FDR_std = performance_metric(score, g_test)
-        
-    print('TPR mean: ' + str(np.round(TPR_mean,1)) + '\%, ' + 'TPR std: ' + str(np.round(TPR_std,1)) + '\%, '  )
-    print('FDR mean: ' + str(np.round(FDR_mean,1)) + '\%, ' + 'FDR std: ' + str(np.round(FDR_std,1)) + '\%, '  )
-        
     #%% Prediction Results
     Predict_Out = np.zeros([20,3,2])    
 
@@ -319,7 +291,7 @@ if __name__ == '__main__':
         
         # different teat seed
         test_seed = i+2
-        _, _, _, x_test, y_test, _ = create_data(data_type, data_out)  
+        _, _, x_test, y_test = create_data(data_type, data_out)
                 
         # 1. Get the selection probability on the testing set
         Sel_Prob_Test = PVS_Alg.output(x_test)
