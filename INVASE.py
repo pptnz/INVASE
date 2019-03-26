@@ -42,7 +42,8 @@ class PVS():
         self.lamda = 0.1            # Hyper-parameter for the number of selected features 
 
         self.input_shape = x_train.shape[1]     # Input dimension
-        
+        self.output_size = 2
+
         # Actionvation. (For Syn1 and 2, relu, others, selu)
         self.activation = 'relu' if data_type in ['Syn1','Syn2'] else 'selu'       
 
@@ -69,17 +70,17 @@ class PVS():
         
         # dimension of the features
         d = y_pred.shape[1]        
-        
+
         # Put all three in y_true 
         # 1. selected probability
         sel_prob = y_true[:,:d]
         # 2. discriminator output
-        dis_prob = y_true[:,d:(d+2)]
+        dis_prob = y_true[:,d:(d + self.output_size)]
         # 3. valfunction output
-        val_prob = y_true[:,(d+2):(d+4)]
+        val_prob = y_true[:, (d + self.output_size):(d + 2 * self.output_size)]
         # 4. ground truth
-        y_final = y_true[:,(d+4):]        
-        
+        y_final = y_true[:, (d + 2 * self.output_size):]
+
         # A1. Compute the rewards of the actor network
         Reward1 = tf.reduce_sum(y_final * tf.log(dis_prob + 1e-8), axis = 1)  
         
@@ -122,7 +123,7 @@ class PVS():
         model.add(BatchNormalization())     # Use Batch norm for preventing overfitting
         model.add(Dense(200, activation=self.activation, name = 'dense2', kernel_regularizer=regularizers.l2(1e-3)))
         model.add(BatchNormalization())
-        model.add(Dense(2, activation ='softmax', name = 'dense3', kernel_regularizer=regularizers.l2(1e-3)))
+        model.add(Dense(self.output_size, activation ='softmax', name ='dense3', kernel_regularizer=regularizers.l2(1e-3)))
         
         model.summary()
         
@@ -147,7 +148,7 @@ class PVS():
         model.add(BatchNormalization())     # Use Batch norm for preventing overfitting
         model.add(Dense(200, activation=self.activation, name = 'v/dense2', kernel_regularizer=regularizers.l2(1e-3)))
         model.add(BatchNormalization())
-        model.add(Dense(2, activation ='softmax', name = 'v/dense3', kernel_regularizer=regularizers.l2(1e-3)))
+        model.add(Dense(self.output_size, activation ='softmax', name = 'v/dense3', kernel_regularizer=regularizers.l2(1e-3)))
         
         model.summary()
         
