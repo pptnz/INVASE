@@ -37,12 +37,12 @@ class PVS():
         self.latent_dim1 = 100      # Dimension of actor (generator) network
         self.latent_dim2 = 200      # Dimension of critic (discriminator) network
         
-        self.batch_size = 1000      # Batch size
-        self.epochs = 10000         # Epoch size (large epoch is needed due to the policy gradient framework)
-        self.lamda = 0.1            # Hyper-parameter for the number of selected features 
+        self.batch_size = 100       # Batch size
+        self.epochs = 1000          # Epoch size (large epoch is needed due to the policy gradient framework)
+        self.lamda = 0.1            # Hyper-parameter for the number of selected features
 
         self.input_shape = x_train.shape[1]     # Input dimension
-        self.output_size = 2
+        self.output_size = 4
 
         # Actionvation.
         self.activation = 'selu'
@@ -239,39 +239,13 @@ class PVS():
 if __name__ == '__main__':
         
     # Data generation function import
-    from Data_Generation import generate_data
-    
-    #%% Parameters
-    # Synthetic data type    
-    idx = 5
-    data_sets = ['Syn1','Syn2','Syn3','Syn4','Syn5','Syn6']
-    data_type = data_sets[idx]
-    
-    # Data output can be either binary (Y) or Probability (Prob)
-    data_out_sets = ['Y','Prob']
-    data_out = data_out_sets[0]
-    
-    # Number of Training and Testing samples
-    train_N = 10000
-    test_N = 10000
-    
-    # Seeds (different seeds for training and testing)
-    train_seed = 0
-    test_seed = 1
-        
-    #%% Data Generation (Train/Test)
-    def create_data(data_type, data_out): 
-        
-        x_train, y_train, _ = generate_data(n = train_N, data_type = data_type, seed = train_seed, out = data_out)
-        x_test,  y_test,  _ = generate_data(n = test_N,  data_type = data_type, seed = test_seed,  out = data_out)
-    
-        return x_train, y_train, x_test, y_test
-    
-    x_train, y_train, x_test, y_test = create_data(data_type, data_out)
+    from Data_Reader import read_data
+
+    x_train, y_train, x_test, y_test = read_data(source="./data/pathway_activity.csv")
 
     #%% 
     # 1. PVS Class call
-    PVS_Alg = PVS(x_train, data_type)
+    PVS_Alg = PVS(x_train)
     
     # 2. Algorithm training
     PVS_Alg.train(x_train, y_train)
@@ -285,34 +259,39 @@ if __name__ == '__main__':
     # 5. Prediction
     val_predict, dis_predict = PVS_Alg.get_prediction(x_test, score)
 
-    #%% Prediction Results
-    Predict_Out = np.zeros([20,3,2])    
+    val_accuracy_table = [[0 for _ in range(PVS_Alg.output_size)] for _ in range(PVS_Alg.output_size)]
+    dis_accuracy_table = [[0 for _ in range(PVS_Alg.output_size)] for _ in range(PVS_Alg.output_size)]
 
-    for i in range(20):
-        
-        # different teat seed
-        test_seed = i+2
-        _, _, x_test, y_test = create_data(data_type, data_out)
-                
-        # 1. Get the selection probability on the testing set
-        Sel_Prob_Test = PVS_Alg.output(x_test)
-    
-        # 2. Selected features
-        score = 1.*(Sel_Prob_Test > 0.5)
-    
-        # 3. Prediction
-        val_predict, dis_predict = PVS_Alg.get_prediction(x_test, score)
-        
-        # 4. Prediction Results
-        Predict_Out[i,0,0] = roc_auc_score(y_test[:,1], val_predict[:,1])
-        Predict_Out[i,1,0] = average_precision_score(y_test[:,1], val_predict[:,1])
-        Predict_Out[i,2,0] = accuracy_score(y_test[:,1], 1. * (val_predict[:,1]>0.5) )
-    
-        Predict_Out[i,0,1] = roc_auc_score(y_test[:,1], dis_predict[:,1])
-        Predict_Out[i,1,1] = average_precision_score(y_test[:,1], dis_predict[:,1])
-        Predict_Out[i,2,1] = accuracy_score(y_test[:,1], 1. * (dis_predict[:,1]>0.5) )
-            
-    # Mean / Var of 20 different testing sets
-    Output = np.round(np.concatenate((np.mean(Predict_Out,0),np.std(Predict_Out,0)),axis = 1),4) 
-    
-    print(Output)
+    val_label = np.argmax(val_predict, axis=1)
+    dis_label = np.argmax(val_predict, axis=1)
+    true_label = np.argmax(y_test, axis=1)
+
+    for i in range(len(true_label)):
+        val_accuracy_table[val_label[i]][true_label[i]] += 1
+        dis_accuracy_table[dis_label[i]][true_label[i]] += 1
+
+    # Compute Accuracy
+    val_correct = 0
+    dis_correct = 0
+
+    for i in range(PVS_Alg.output_size):
+        val_correct += val_accuracy_table[i][i]
+        dis_correct += dis_accuracy_table[i][i]
+
+    val_accuracy = val_correct / len(val_label)
+    dis_accuracy = dis_correct / len(dis_label)
+
+    # Print Accuracy Table
+    print("\nBaseline Prediction")
+    for i in range(len(val_accuracy_table)):
+        for j in range(len(val_accuracy_table[i])):
+            print(val_accuracy_table[i][j], end=' ')
+        print()
+    print("Accuracy: {:.4f}".format(val_accuracy))
+
+    print("\nPredictor Prediction")
+    for i in range(len(dis_accuracy_table)):
+        for j in range(len(dis_accuracy_table[i])):
+            print(dis_accuracy_table[i][j], end=' ')
+        print()
+    print("Accuracy: {:.4f}".format(dis_accuracy))
