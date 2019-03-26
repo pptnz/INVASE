@@ -38,7 +38,7 @@ class PVS():
         self.latent_dim2 = 200      # Dimension of critic (discriminator) network
         
         self.batch_size = 100       # Batch size
-        self.epochs = 1000          # Epoch size (large epoch is needed due to the policy gradient framework)
+        self.epochs = 20000          # Epoch size (large epoch is needed due to the policy gradient framework)
         self.lamda = 0.1            # Hyper-parameter for the number of selected features
 
         self.input_shape = x_train.shape[1]     # Input dimension
@@ -48,7 +48,7 @@ class PVS():
         self.activation = 'selu'
 
         # Use Adam optimizer with learning rate = 0.0001
-        optimizer = Adam(0.0001)
+        optimizer = Adam(0.00001)
         
         # Build and compile the discriminator (critic)
         self.discriminator = self.build_discriminator()
@@ -104,8 +104,7 @@ class PVS():
         model = Sequential()
         
         model.add(Dense(100, activation=self.activation, name = 's/dense1', kernel_regularizer=regularizers.l2(1e-3), input_dim = self.input_shape))
-        model.add(Dense(100, activation=self.activation, name = 's/dense2', kernel_regularizer=regularizers.l2(1e-3)))
-        model.add(Dense(self.input_shape, activation = 'sigmoid', name = 's/dense3', kernel_regularizer=regularizers.l2(1e-3)))
+        model.add(Dense(self.input_shape, activation = 'sigmoid', name = 's/dense2', kernel_regularizer=regularizers.l2(1e-3)))
         
         model.summary()
 
@@ -121,9 +120,7 @@ class PVS():
                 
         model.add(Dense(200, activation=self.activation, name = 'dense1', kernel_regularizer=regularizers.l2(1e-3), input_dim = self.input_shape)) 
         model.add(BatchNormalization())     # Use Batch norm for preventing overfitting
-        model.add(Dense(200, activation=self.activation, name = 'dense2', kernel_regularizer=regularizers.l2(1e-3)))
-        model.add(BatchNormalization())
-        model.add(Dense(self.output_size, activation ='softmax', name ='dense3', kernel_regularizer=regularizers.l2(1e-3)))
+        model.add(Dense(self.output_size, activation ='softmax', name ='dense2', kernel_regularizer=regularizers.l2(1e-3)))
         
         model.summary()
         
@@ -146,9 +143,7 @@ class PVS():
                 
         model.add(Dense(200, activation=self.activation, name = 'v/dense1', kernel_regularizer=regularizers.l2(1e-3), input_dim = self.input_shape)) 
         model.add(BatchNormalization())     # Use Batch norm for preventing overfitting
-        model.add(Dense(200, activation=self.activation, name = 'v/dense2', kernel_regularizer=regularizers.l2(1e-3)))
-        model.add(BatchNormalization())
-        model.add(Dense(self.output_size, activation ='softmax', name = 'v/dense3', kernel_regularizer=regularizers.l2(1e-3)))
+        model.add(Dense(self.output_size, activation ='softmax', name = 'v/dense2', kernel_regularizer=regularizers.l2(1e-3)))
         
         model.summary()
         
