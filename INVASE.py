@@ -33,7 +33,7 @@ class PVS():
     x_train: training samples
     data_type: Syn1 to Syn 6
     '''
-    def __init__(self, x_train, data_type):
+    def __init__(self, x_train):
         self.latent_dim1 = 100      # Dimension of actor (generator) network
         self.latent_dim2 = 200      # Dimension of critic (discriminator) network
         
@@ -213,7 +213,7 @@ class PVS():
             g_loss = self.generator.train_on_batch(x_batch, y_batch_final)
 
             #%% Plot the progress
-            dialog = 'Epoch: ' + str(epoch) + ', d_loss (Acc)): ' + str(d_loss[1]) + ', v_loss (Acc): ' + str(v_loss[1]) + ', g_loss: ' + str(np.round(g_loss,4))
+            dialog = 'Epoch: ' + str(epoch) + ', d_loss (Acc): ' + str(d_loss[1]) + ', v_loss (Acc): ' + str(v_loss[1]) + ', g_loss: ' + str(np.round(g_loss,4))
 
             if epoch % 100 == 0:
                 print(dialog)
