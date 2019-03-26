@@ -44,8 +44,8 @@ class PVS():
         self.input_shape = x_train.shape[1]     # Input dimension
         self.output_size = 2
 
-        # Actionvation. (For Syn1 and 2, relu, others, selu)
-        self.activation = 'relu' if data_type in ['Syn1','Syn2'] else 'selu'       
+        # Actionvation.
+        self.activation = 'selu'
 
         # Use Adam optimizer with learning rate = 0.0001
         optimizer = Adam(0.0001)
