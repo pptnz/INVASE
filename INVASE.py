@@ -265,6 +265,11 @@ if __name__ == '__main__':
         val_accuracy_table[val_label[i]][true_label[i]] += 1
         dis_accuracy_table[dis_label[i]][true_label[i]] += 1
 
+    # Compute weighted F1 score
+    from sklearn.metrics import f1_score
+    val_f1_score = f1_score(true_label, val_label, average='weighted')
+    dis_f1_score = f1_score(true_label, dis_label, average='weighted')
+
     # Compute Accuracy
     val_correct = 0
     dis_correct = 0
@@ -282,6 +287,7 @@ if __name__ == '__main__':
         for j in range(len(val_accuracy_table[i])):
             print(val_accuracy_table[i][j], end=' ')
         print()
+    print("Weighted F1 Score: {:.4f}".format(val_f1_score))
     print("Accuracy: {:.4f}".format(val_accuracy))
 
     print("\nPredictor Prediction")
@@ -289,4 +295,5 @@ if __name__ == '__main__':
         for j in range(len(dis_accuracy_table[i])):
             print(dis_accuracy_table[i][j], end=' ')
         print()
+    print("Weighted F1 Score: {:.4f}".format(dis_f1_score))
     print("Accuracy: {:.4f}".format(dis_accuracy))
