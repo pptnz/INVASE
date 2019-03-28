@@ -250,7 +250,11 @@ if __name__ == '__main__':
     
     # 4. Selected features
     score = 1.*(Sel_Prob_Test > 0.5)
-    
+    num_sel_features = score.sum() / len(score)
+    print("Number of Selected Features:", num_sel_features)
+
+    # np.savetxt("testset_selected_feature.csv", score, delimiter=',')
+
     # 5. Prediction
     val_predict, dis_predict = PVS_Alg.get_prediction(x_test, score)
 
