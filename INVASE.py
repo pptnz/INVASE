@@ -16,6 +16,7 @@ Instance-wise Variable Selection (INVASE) - with baseline networks
 from keras.layers import Input, Dense, Multiply
 from keras.layers import BatchNormalization
 from keras.models import Sequential, Model
+from keras.models import Sequential, Model, load_model
 from keras.optimizers import Adam
 from keras import regularizers
 from keras import backend as K
@@ -36,6 +37,7 @@ class PVS():
     def __init__(self, x_train):
         self.latent_dim1 = 100      # Dimension of actor (generator) network
         self.latent_dim2 = 200      # Dimension of critic (discriminator) network
+    def __init__(self, x_train, load_model=False):
         
         self.batch_size = 100       # Batch size
         self.epochs = 20000          # Epoch size (large epoch is needed due to the policy gradient framework)
@@ -50,20 +52,23 @@ class PVS():
         # Use Adam optimizer with learning rate = 0.0001
         optimizer = Adam(0.00001)
         
-        # Build and compile the discriminator (critic)
-        self.discriminator = self.build_discriminator()
-        # Use categorical cross entropy as the loss
-        self.discriminator.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['acc'])
+        if load_model:
+            self.load_models()
+        else:
+            # Build and compile the discriminator (critic)
+            self.discriminator = self.build_discriminator()
+            # Use categorical cross entropy as the loss
+            self.discriminator.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['acc'])
 
-        # Build the generator (actor)
-        self.generator = self.build_generator()
-        # Use custom loss (my loss)
-        self.generator.compile(loss=self.my_loss, optimizer=optimizer)
+            # Build the generator (actor)
+            self.generator = self.build_generator()
+            # Use custom loss (my loss)
+            self.generator.compile(loss=self.my_loss, optimizer=optimizer)
 
-        # Build and compile the value function
-        self.valfunction = self.build_valfunction()
-        # Use categorical cross entropy as the loss
-        self.valfunction.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['acc'])
+            # Build and compile the value function
+            self.valfunction = self.build_valfunction()
+            # Use categorical cross entropy as the loss
+            self.valfunction.compile(loss='categorical_crossentropy', optimizer=optimizer, metrics=['acc'])
 
     #%% Custom loss definition
     def my_loss(self, y_true, y_pred):
@@ -229,6 +234,16 @@ class PVS():
         
         return np.asarray(val_prediction), np.asarray(dis_prediction)
 
+    def save_models(self):
+        self.generator.save('./model/generator.h5')
+        self.valfunction.save('./model/valfunction.h5')
+        self.discriminator.save('./model/discriminator.h5')
+
+    def load_models(self):
+        self.generator = load_model('./model/generator.h5', custom_objects={'my_loss': self.my_loss})
+        self.valfunction = load_model('./model/valfunction.h5')
+        self.discriminator = load_model('./model/discriminator.h5')
+
 
 #%% Main Function
 if __name__ == '__main__':
@@ -240,7 +255,7 @@ if __name__ == '__main__':
 
     #%% 
     # 1. PVS Class call
-    PVS_Alg = PVS(x_train)
+    PVS_Alg = PVS(x_train, load_model=True)
     
     # 2. Algorithm training
     PVS_Alg.train(x_train, y_train)
@@ -254,6 +269,7 @@ if __name__ == '__main__':
     print("Number of Selected Features:", num_sel_features)
 
     # np.savetxt("testset_selected_feature.csv", score, delimiter=',')
+    PVS_Alg.save_models()
 
     # 5. Prediction
     val_predict, dis_predict = PVS_Alg.get_prediction(x_test, score)
